@@ -34,6 +34,7 @@ export interface ReviewSummary{
   reviewCount: number
 }
 
-export interface ReviewResponse{
-
+export interface ReviewsResponse {
+  reviews: Review[]
+  error?: string
 }

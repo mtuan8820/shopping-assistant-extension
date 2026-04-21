@@ -14,7 +14,7 @@ export function waitForPrice(timeout = 10000): Promise<void> {
 
 
 export function scrapeProductInfo() {
-  const title = document.querySelector('h1')?.textContent?.trim() ?? document.title
+  const title = document.querySelector("h1")?.textContent?.trim() ?? document.title
   const priceSelectors = [
     ".IZPeQz", 
     ".B67UQ0",
