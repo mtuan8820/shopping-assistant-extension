@@ -9,13 +9,13 @@ export async function callGemini(reviews: Review[], ai: GoogleGenAI): Promise<Re
   const res = await ai.models.generateContent({
     model: 'gemma-4-31b-it',
     contents:
-`Analyze these Shopee product reviews and return a JSON object with this exact shape:
-{"groups":[{"feature":"string","pros":["..."],"cons":["..."]}],"prose":"string","reviewCount":number}
+      `Analyze these Shopee product reviews and return a JSON object with this exact shape:
+      {"groups":[{"feature":"string","pros":["..."],"cons":["..."]}],"prose":"string","reviewCount":number}
 
-Reviews:
-${reviewText}
+      Reviews:
+      ${reviewText}
 
-Return ONLY the JSON, no other text.`,
+      Return ONLY the JSON, no other text.`,
   })
 
   const text = res.text

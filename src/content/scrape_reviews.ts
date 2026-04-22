@@ -11,6 +11,10 @@ const REVIEW_TEXT_SELECTORS = [
   'div:nth-child(2) > div:nth-child(2)',
 ]
 
+const NEXT_PAGE_BTN_SELETORS = [
+  '.shopee-icon-button--right'
+]
+
 function scrollToReviews(): void {
   document.querySelector('.product-rating-overview__filters')
     ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -19,7 +23,16 @@ function scrollToReviews(): void {
 function getStarFilterButtons(): HTMLElement[] {
   const all = document.querySelectorAll<HTMLElement>('.product-rating-overview__filter')
   // index 0 = All, index 1-5 = 5★ down to 1★
-  return Array.from(all).slice(1, 5)
+  // after reversed, returned array's index 0 = 1★, index 1 = 2★ 
+  return Array.from(all).slice(1, 6).reverse();
+}
+
+function getNextPageButton(): HTMLElement | null {
+  for (const selector of NEXT_PAGE_BTN_SELETORS) {
+    const btn = document.querySelector<HTMLElement>(selector)
+    if (btn) return btn;
+  }
+  return null;
 }
 
 function getFirstReviewText(): string | null {
@@ -48,22 +61,20 @@ function waitForReviewsToChange(prevText: string | null, timeout = PAGE_LOAD_TIM
   })
 }
 
-function scrapeCurrentPage(): Review[] {
+function scrapeCurrentPage(rating: number): Review[] {
   const reviews: Review[] = []
 
   for (const s of REVIEW_ITEM_SELECTORS) {
     const items = document.querySelectorAll(s)
     if (items.length === 0) continue
 
-    items.forEach((item, index) => {
+    items.forEach((item) => {
       let text = ''
       for (const ts of REVIEW_TEXT_SELECTORS) {
         const t = item.querySelector(ts)?.textContent?.trim()
         if (t) { text = t; break }
       }
       if (!text) return
-
-      const rating = 5-index;
 
       const date = item.querySelector('[class*="time"], [class*="date"]')?.textContent?.trim()
       reviews.push({ text, rating, ...(date ? { date } : {}) })
@@ -79,17 +90,40 @@ export async function scrapeReviews(): Promise<Review[]> {
 
   const starFilters = getStarFilterButtons()
   if (starFilters.length === 0) return []
+  console.log(starFilters)
 
   const allReviews: Review[] = []
 
-  for (const filterBtn of starFilters) {
-    const prevText = getFirstReviewText()
+  for (const [index, filterBtn] of starFilters.entries()) {
+    console.debug({currentFilter: filterBtn.textContent, index: index})
+    const rating = index+1;
+    
+    let prevText = getFirstReviewText()
+    
     filterBtn.click()
 
-    const changed = await waitForReviewsToChange(prevText)
+    let changed = await waitForReviewsToChange(prevText)
     if (!changed) continue
 
-    allReviews.push(...scrapeCurrentPage())
+    allReviews.push(...scrapeCurrentPage(rating))
+    
+
+    let currentPageText = getFirstReviewText()
+    const nextReviewPageBtn = getNextPageButton();
+    console.log(nextReviewPageBtn);
+
+    if (nextReviewPageBtn != null) {
+      for (const _ of [...Array(9).keys()]) {
+        nextReviewPageBtn.click();
+        changed = await waitForReviewsToChange(currentPageText)
+        if (!changed) break;
+
+        allReviews.push(...scrapeCurrentPage(rating))
+        currentPageText = getFirstReviewText()
+      }
+    } else {
+      console.debug("cannot get next-page-button", {currentFilter: filterBtn.textContent})
+    }
   }
 
   return allReviews

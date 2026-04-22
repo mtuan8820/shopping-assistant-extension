@@ -39,8 +39,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { ProductInfo, ReviewSummary } from '../shared/types'
-import { GoogleGenAI } from '@google/genai'
-import { callGemini } from './gemini'
+// import { GoogleGenAI } from '@google/genai'
+// import { callGemini } from './gemini'
 
 const loading = ref(false)
 const loadingStatus = ref('')
@@ -48,8 +48,8 @@ const product = ref<ProductInfo | null>(null)
 const summary = ref<ReviewSummary | null>(null)
 const error = ref<string | null>(null)
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY })
+// const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string
+// const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY })
 
 async function scanPage() {
   loading.value = true
@@ -69,9 +69,11 @@ async function scanPage() {
     loadingStatus.value = 'Scraping reviews…'
     const reviewsRes = await chrome.tabs.sendMessage(tab.id, { type: 'GET_REVIEWS' })
     if (!reviewsRes.reviews?.length) throw new Error('No reviews found')
-
-    loadingStatus.value = 'Summarizing…'
-    summary.value = await callGemini(reviewsRes.reviews, ai)
+    else {
+      console.log(reviewsRes.reviews)
+    }
+    // loadingStatus.value = 'Summarizing…'
+    // summary.value = await callGemini(reviewsRes.reviews, ai)
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Something went wrong'
   } finally {
