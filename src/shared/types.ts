@@ -20,6 +20,12 @@ export interface Review {
   text: string
   rating: number
   date?: string
+  features: Feature[] | null
+}
+
+export interface Feature{
+  name: string
+  text: string
 }
 
 export interface FeatureGroup{
