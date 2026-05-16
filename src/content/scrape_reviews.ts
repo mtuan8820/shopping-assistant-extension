@@ -117,6 +117,16 @@ function scrapeCurrentPage(rating: number): Review[] {
   return reviews
 }
 
+function downloadJSON(data: unknown, filename: string): void {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function scrapeReviews(): Promise<Review[]> {
   scrollToReviews()
 
@@ -145,7 +155,7 @@ export async function scrapeReviews(): Promise<Review[]> {
     const nextReviewPageBtn = getNextPageButton();
 
     if (nextReviewPageBtn != null) {
-      for (const _ of [...Array(1).keys()]) {
+      for (const _ of [...Array(5).keys()]) {
         nextReviewPageBtn.click();
         changed = await waitForReviewsToChange(currentPageText)
         if (!changed) break;
@@ -158,5 +168,6 @@ export async function scrapeReviews(): Promise<Review[]> {
     }
   }
 
+  downloadJSON(allReviews, `reviews_${Date.now()}.json`)
   return allReviews
 }
