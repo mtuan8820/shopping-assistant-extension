@@ -134,7 +134,7 @@ Track these automatically during every pipeline run:
 ```
 ret = []
 for line in reviews:
-  line = normalize(line) //unicode + lowercase + remove html
+  line = normalize(line) // remove html
   tokens = line.split(" ")
   tokens = [handle_slang(token) for token in tokens]
   cleaned_tokens = [w for w in tokens if dictionary.contains(w) ]
