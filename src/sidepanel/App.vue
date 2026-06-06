@@ -2,45 +2,74 @@
   <div class="panel">
     <header>
       <h1>Shopping Assistant</h1>
+      <button
+        v-if="!showSettings"
+        class="settings-icon"
+        @click="showSettings = true"
+        title="API key settings"
+      >⚙️</button>
     </header>
 
-    <main>
-      <button @click="scanPage" :disabled="loading">
-        {{ loading ? loadingStatus : 'Analyze Reviews' }}
-      </button>
+    <!-- Settings view -->
+    <main v-if="showSettings">
+      <ApiKeySettings
+        :has-saved-key="!!geminiApiKey"
+        @saved="onKeySaved"
+        @cleared="onKeyCleared"
+      />
+      <button
+        v-if="geminiApiKey"
+        class="back-btn"
+        @click="showSettings = false"
+      >← Back</button>
+    </main>
 
-      <div v-if="error" class="error">{{ error }}</div>
-
-      <div v-if="product" class="product">
-        <p class="title">{{ product.title }}</p>
-        <p v-if="product.price" class="price">{{ product.price }}</p>
-        <p v-else class="no-price">No price found</p>
-        <a :href="product.url" target="_blank" class="url">{{ product.url }}</a>
+    <!-- Main view -->
+    <main v-else>
+      <!-- No key yet — nudge user to add one -->
+      <div v-if="!geminiApiKey" class="no-key-notice">
+        <p>Add your Gemini API key to get started.</p>
+        <button @click="showSettings = true">Add API Key</button>
       </div>
 
-      <div v-if="summary" class="summary">
-        <p class="prose">{{ summary.prose }}</p>
-        <p class="review-count">Based on {{ summary.reviewCount }} reviews</p>
+      <template v-else>
+        <button @click="scanPage" :disabled="loading">
+          {{ loading ? loadingStatus : 'Analyze Reviews' }}
+        </button>
 
-        <div v-for="group in summary.groups" :key="group.feature" class="group">
-          <p class="feature">{{ group.feature }}</p>
-          <ul v-if="group.pros.length" class="pros">
-            <li v-for="pro in group.pros" :key="pro">{{ pro }}</li>
-          </ul>
-          <ul v-if="group.cons.length" class="cons">
-            <li v-for="con in group.cons" :key="con">{{ con }}</li>
-          </ul>
+        <div v-if="error" class="error">{{ error }}</div>
+
+        <div v-if="product" class="product">
+          <p class="title">{{ product.title }}</p>
+          <p v-if="product.price" class="price">{{ product.price }}</p>
+          <p v-else class="no-price">No price found</p>
+          <a :href="product.url" target="_blank" class="url">{{ product.url }}</a>
         </div>
-      </div>
+
+        <div v-if="summary" class="summary">
+          <p class="prose">{{ summary.prose }}</p>
+          <p class="review-count">Based on {{ summary.reviewCount }} reviews</p>
+
+          <div v-for="group in summary.groups" :key="group.feature" class="group">
+            <p class="feature">{{ group.feature }}</p>
+            <ul v-if="group.pros.length" class="pros">
+              <li v-for="pro in group.pros" :key="pro">{{ pro }}</li>
+            </ul>
+            <ul v-if="group.cons.length" class="cons">
+              <li v-for="con in group.cons" :key="con">{{ con }}</li>
+            </ul>
+          </div>
+        </div>
+      </template>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import type { ProductInfo, ReviewSummary } from '../shared/types'
-// import { GoogleGenAI } from '@google/genai'
-// import { callGemini } from './gemini'
+import ApiKeySettings from './ApiKeySettings.vue'
+import { getGeminiApiKey } from './storage'
 
 const loading = ref(false)
 const loadingStatus = ref('')
@@ -48,8 +77,23 @@ const product = ref<ProductInfo | null>(null)
 const summary = ref<ReviewSummary | null>(null)
 const error = ref<string | null>(null)
 
-// const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string
-// const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY })
+const geminiApiKey = ref<string | null>(null)
+const showSettings = ref(false)
+
+onMounted(async () => {
+  geminiApiKey.value = await getGeminiApiKey()
+  // If no key stored yet, open settings immediately
+  if (!geminiApiKey.value) showSettings.value = true
+})
+
+function onKeySaved(key: string) {
+  geminiApiKey.value = key
+  showSettings.value = false
+}
+
+function onKeyCleared() {
+  geminiApiKey.value = null
+}
 
 async function scanPage() {
   loading.value = true
@@ -90,9 +134,61 @@ async function scanPage() {
   min-width: 300px;
 }
 
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
 header h1 {
   font-size: 1.1rem;
-  margin: 0 0 16px;
+  margin: 0;
+}
+
+.settings-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  width: auto;
+  color: inherit;
+  opacity: 0.7;
+}
+.settings-icon:hover {
+  opacity: 1;
+  background: #f1f3f4;
+}
+
+.back-btn {
+  margin-top: 16px;
+  width: 100%;
+  padding: 8px 16px;
+  background: transparent;
+  color: #1a73e8;
+  border: 1px solid #1a73e8;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.back-btn:hover {
+  background: #e8f0fe;
+}
+
+.no-key-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+  text-align: center;
+}
+.no-key-notice p {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0;
 }
 
 button {

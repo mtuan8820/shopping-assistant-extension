@@ -74,7 +74,7 @@ async function clear() {
   try {
     await clearGeminiApiKey()
     draft.value = ''
-    feedback.value = 'Key removed.'
+    feedback.value = 'Key removed. Please enter an API Key to continue use the extension.'
     feedbackType.value = 'ok'
     emit('cleared')
   } catch {
