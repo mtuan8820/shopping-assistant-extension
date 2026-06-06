@@ -6,6 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a browser extension — a shopping assistant — built with Vue 3, TypeScript, and Vite. The extension follows the standard browser extension architecture with a popup UI and a content script that runs on web pages.
 
+Current phase is MVP:
+- Focus on the feature summary reviews on the current-opened Shoppee page.
+- 
 ## Commands
 
 ```bash
@@ -28,7 +31,7 @@ There is no test runner configured yet.
 
 The extension is split into two distinct execution contexts that cannot share module state at runtime:
 
-- **`src/popup/`** — The browser extension popup UI. Entry point is `main.ts`, which mounts the Vue 3 app (`App.vue`). This runs in an isolated popup window.
+- **`src/sidepanel/`** — The browser extension popup UI. Entry point is `main.ts`, which mounts the Vue 3 app (`App.vue`). This runs in a sidepanel.
 - **`src/content/`** — The content script (`index.ts`) injected directly into shopping pages. This has access to the page DOM but runs in a sandboxed context separate from the popup.
 - **`src/shared/types.ts`** — Shared TypeScript types used by both the popup and the content script. Cross-context communication (popup ↔ content script) must go through the browser's message-passing API (`chrome.runtime.sendMessage` / `chrome.tabs.sendMessage`), not direct imports.
 
